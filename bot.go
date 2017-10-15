@@ -63,21 +63,17 @@ func (bot *BotAPI) MakeRequest(endpoint string, params url.Values) (APIResponse,
 
 	resp, err := bot.Client.PostForm(method, params)
 	if err != nil {
-		return APIResponse{}, err
+		code := 0
+		if resp != nil {
+			code = resp.StatusCode
+		}
+		return APIResponse{}, Error{Code: code, Err: err}
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusForbidden {
-		return APIResponse{}, errors.New(ErrAPIForbidden)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return APIResponse{}, errors.New(http.StatusText(resp.StatusCode))
-	}
-
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return APIResponse{}, err
+		return APIResponse{}, Error{Code: resp.StatusCode, Err: err}
 	}
 
 	if bot.Debug {
@@ -88,7 +84,7 @@ func (bot *BotAPI) MakeRequest(endpoint string, params url.Values) (APIResponse,
 	json.Unmarshal(bytes, &apiResp)
 
 	if !apiResp.Ok {
-		return apiResp, errors.New(apiResp.Description)
+		return APIResponse{}, Error{Code: apiResp.ErrorCode, Err: errors.New(apiResp.Description), Description: apiResp.Description, Parameters: apiResp.Parameters}
 	}
 
 	return apiResp, nil
@@ -177,13 +173,13 @@ func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldna
 
 	res, err := bot.Client.Do(req)
 	if err != nil {
-		return APIResponse{}, err
+		return APIResponse{}, Error{Code: res.StatusCode, Err: err}
 	}
 	defer res.Body.Close()
 
 	bytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return APIResponse{}, err
+		return APIResponse{}, Error{Code: res.StatusCode, Err: err}
 	}
 
 	if bot.Debug {
@@ -191,14 +187,10 @@ func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldna
 	}
 
 	var apiResp APIResponse
-
-	err = json.Unmarshal(bytes, &apiResp)
-	if err != nil {
-		return APIResponse{}, err
-	}
+	json.Unmarshal(bytes, &apiResp)
 
 	if !apiResp.Ok {
-		return APIResponse{}, errors.New(apiResp.Description)
+		return APIResponse{}, Error{Code: apiResp.ErrorCode, Err: errors.New(apiResp.Description), Description: apiResp.Description, Parameters: apiResp.Parameters}
 	}
 
 	return apiResp, nil

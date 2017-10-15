@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,6 +25,72 @@ type APIResponse struct {
 type ResponseParameters struct {
 	MigrateToChatID int64 `json:"migrate_to_chat_id"` // optional
 	RetryAfter      int   `json:"retry_after"`        // optional
+}
+
+type Error struct {
+	Code        int
+	Description string
+	Parameters  *ResponseParameters
+	Err         error
+}
+
+func (e Error) Error() string { return fmt.Sprintf("TG returned %d: %v", e.Code, e.Err.Error()) }
+
+func (e Error) ChatDiactivated() bool {
+	return strings.ToLower(e.Description) == "group chat is deactivated"
+}
+
+func (e Error) ChatNotFound() bool {
+	return (strings.ToLower(e.Description) == "chat not found" || e.Description == "PEER_ID_INVALID")
+}
+
+func (e Error) BotKicked() bool {
+	return strings.Contains(strings.ToLower(e.Description), "bot was kicked")
+}
+
+func (e Error) TooManyRequests() bool {
+	return strings.Contains(strings.ToLower(e.Description), "many requests")
+}
+
+func (e Error) BotStoppedForUser() bool {
+	return strings.Contains(strings.ToLower(e.Description), "bot was blocked")
+}
+
+func (e Error) ChatMigrated() bool {
+	return (e.Parameters != nil && e.Parameters.MigrateToChatID != 0)
+}
+
+func (e Error) IsMessageNotFound() bool {
+	return strings.Contains(strings.ToLower(e.Description), "message not found")
+}
+
+func (e Error) IsAntiFlood() bool {
+	return strings.Contains(strings.ToLower(e.Description), "big total timeout")
+}
+
+func (e Error) IsCantAccessChat() bool {
+	return strings.Contains(strings.ToLower(e.Description), "can't access the chat")
+}
+
+func (e Error) IsParseError() bool {
+	return strings.Contains(strings.ToLower(e.Description), "parse message text")
+}
+
+var REParseErrorOffset = regexp.MustCompile("starting at byte offset ([0-9]*)")
+
+func (e Error) ParseErrorOffset() int {
+	b := REParseErrorOffset.FindStringSubmatch(e.Description)
+
+	if len(b) < 2 {
+		return -1
+	}
+
+	of, err := strconv.Atoi(b[1])
+	if err != nil {
+		return -1
+	}
+
+	return of
 }
 
 // Update is an update response, from GetUpdates.
