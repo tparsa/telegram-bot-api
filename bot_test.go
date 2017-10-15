@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/requilence/telegram-bot-api"
 )
 
 const (
-	TestToken               = "153667468:AAHlSHlMqSt1f_uFmVRJbm5gntu2HI4WW8I"
-	ChatID                  = 76918703
-	SupergroupChatID        = -1001120141283
-	ReplyToMessageID        = 35
+	TestToken               = "229799921:AAFIWuynugPZDJ00As-t4lF9UObBHl1X1k8"
+	ChatID                  = 858140
+	SupergroupChatID        = 858140
+	ReplyToMessageID        = 1
 	ExistingPhotoFileID     = "AgADAgADw6cxG4zHKAkr42N7RwEN3IFShCoABHQwXEtVks4EH2wBAAEC"
 	ExistingDocumentFileID  = "BQADAgADOQADjMcoCcioX1GrDvp3Ag"
 	ExistingAudioFileID     = "BQADAgADRgADjMcoCdXg3lSIN49lAg"
@@ -619,8 +619,8 @@ func TestPinChatMessage(t *testing.T) {
 	message, _ := bot.Send(msg)
 
 	pinChatMessageConfig := tgbotapi.PinChatMessageConfig{
-		ChatID:    message.Chat.ID,
-		MessageID: message.MessageID,
+		ChatID:              message.Chat.ID,
+		MessageID:           message.MessageID,
 		DisableNotification: false,
 	}
 	_, err := bot.PinChatMessage(pinChatMessageConfig)
@@ -640,14 +640,14 @@ func TestUnpinChatMessage(t *testing.T) {
 
 	// We need pin message to unpin something
 	pinChatMessageConfig := tgbotapi.PinChatMessageConfig{
-		ChatID:    message.Chat.ID,
-		MessageID: message.MessageID,
+		ChatID:              message.Chat.ID,
+		MessageID:           message.MessageID,
 		DisableNotification: false,
 	}
 	_, err := bot.PinChatMessage(pinChatMessageConfig)
 
 	unpinChatMessageConfig := tgbotapi.UnpinChatMessageConfig{
-		ChatID:    message.Chat.ID,
+		ChatID: message.Chat.ID,
 	}
 	_, err = bot.UnpinChatMessage(unpinChatMessageConfig)
 
