@@ -116,6 +116,11 @@ func (bot *BotAPI) makeMessageRequest(endpoint string, params url.Values) (Messa
 func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldname string, file interface{}) (APIResponse, error) {
 	ms := multipartstreamer.New()
 
+	filename := ""
+	if fn, ok := params["filename"]; ok {
+		filename = fn
+		delete(params, "filename")
+	}
 	switch f := file.(type) {
 	case string:
 		ms.WriteFields(params)
@@ -131,17 +136,27 @@ func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldna
 			return APIResponse{}, err
 		}
 
-		ms.WriteReader(fieldname, fileHandle.Name(), fi.Size(), fileHandle)
+		if filename == "" {
+			filename = fileHandle.Name()
+		}
+		ms.WriteReader(fieldname, filename, fi.Size(), fileHandle)
 	case FileBytes:
 		ms.WriteFields(params)
 
 		buf := bytes.NewBuffer(f.Bytes)
-		ms.WriteReader(fieldname, f.Name, int64(len(f.Bytes)), buf)
+		if filename == "" {
+			filename = f.Name
+		}
+		ms.WriteReader(fieldname, filename, int64(len(f.Bytes)), buf)
 	case FileReader:
 		ms.WriteFields(params)
 
+		if filename == "" {
+			filename = f.Name
+		}
 		if f.Size != -1 {
-			ms.WriteReader(fieldname, f.Name, f.Size, f.Reader)
+
+			ms.WriteReader(fieldname, filename, f.Size, f.Reader)
 
 			break
 		}
@@ -153,7 +168,7 @@ func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldna
 
 		buf := bytes.NewBuffer(data)
 
-		ms.WriteReader(fieldname, f.Name, int64(len(data)), buf)
+		ms.WriteReader(fieldname, filename, int64(len(data)), buf)
 	case url.URL:
 		params[fieldname] = f.String()
 

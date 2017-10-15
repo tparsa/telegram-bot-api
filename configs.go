@@ -103,6 +103,7 @@ type BaseFile struct {
 	BaseChat
 	File        interface{}
 	FileID      string
+	FileName    string
 	UseExisting bool
 	MimeType    string
 	FileSize    int
@@ -137,6 +138,10 @@ func (file BaseFile) params() (map[string]string, error) {
 
 	if file.FileSize > 0 {
 		params["file_size"] = strconv.Itoa(file.FileSize)
+	}
+
+	if file.FileName != "" {
+		params["filename"] = file.FileName
 	}
 
 	params["disable_notification"] = strconv.FormatBool(file.DisableNotification)
