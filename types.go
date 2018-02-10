@@ -37,7 +37,7 @@ type Error struct {
 func (e Error) Error() string { return fmt.Sprintf("TG returned %d: %v", e.Code, e.Err.Error()) }
 
 func (e Error) ChatDiactivated() bool {
-	return strings.ToLower(e.Description) == "group chat is deactivated"
+	return strings.Contains(strings.ToLower(e.Description),  "is deactivated")
 }
 
 func (e Error) ChatNotFound() bool {
@@ -45,7 +45,8 @@ func (e Error) ChatNotFound() bool {
 }
 
 func (e Error) BotKicked() bool {
-	return strings.Contains(strings.ToLower(e.Description), "bot was kicked")
+	e.Description = strings.ToLower(e.Description)
+	return strings.Contains(e.Description, "bot was kicked") || strings.Contains(e.Description, "bot is not a member of the channel")
 }
 
 func (e Error) TooManyRequests() bool {
@@ -73,7 +74,8 @@ func (e Error) IsCantAccessChat() bool {
 }
 
 func (e Error) IsParseError() bool {
-	return strings.Contains(strings.ToLower(e.Description), "parse message text")
+	e.Description = strings.ToLower(e.Description)
+	return strings.Contains(e.Description, "parse message text") || strings.Contains(e.Description, "can't parse entities in message text")
 }
 
 var REParseErrorOffset = regexp.MustCompile("starting at byte offset ([0-9]*)")
