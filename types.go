@@ -201,6 +201,7 @@ func (c Chat) ChatConfig() ChatConfig {
 // almost anything.
 type Message struct {
 	MessageID             int                `json:"message_id"`
+	InlineMessageID       string             `json:"inline_message_id"`
 	From                  *User              `json:"from"` // optional
 	Date                  int                `json:"date"`
 	Chat                  *Chat              `json:"chat"`
@@ -734,6 +735,7 @@ type InlineQueryResultGame struct {
 type ChosenInlineResult struct {
 	ResultID        string    `json:"result_id"`
 	From            *User     `json:"from"`
+	Chat            *Chat
 	Location        *Location `json:"location"`
 	InlineMessageID string    `json:"inline_message_id"`
 	Query           string    `json:"query"`

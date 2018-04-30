@@ -481,8 +481,30 @@ func (bot *BotAPI) GetUpdatesChan(config UpdateConfig) (UpdatesChannel, error) {
 				continue
 			}
 
+			hasMessageUpdateFrom := map[int64]int{}
+
+			for i, update := range updates {
+				if update.Message != nil {
+					hasMessageUpdateFrom[update.Message.From.ID] = i
+				}
+			}
+
 			for _, update := range updates {
 				if update.UpdateID >= config.Offset {
+					if update.ChosenInlineResult != nil {
+						if otherUpdate, exists := hasMessageUpdateFrom[update.ChosenInlineResult.From.ID]; exists {
+							// if updates are in the same batch and update_id is diff less than 10
+							// we can correlate choosen_result and message appeared in the chat
+							idDiff := updates[otherUpdate].UpdateID - update.UpdateID
+							if idDiff > -10 && idDiff < 10 {
+								// set the chat info for ChosenInlineResult as it only have user info
+								update.ChosenInlineResult.Chat = updates[otherUpdate].Message.Chat
+
+								// set the InlineMessageID for the m
+								updates[otherUpdate].Message.InlineMessageID = update.ChosenInlineResult.InlineMessageID
+							}
+						}
+					}
 					config.Offset = update.UpdateID + 1
 					ch <- update
 				}
