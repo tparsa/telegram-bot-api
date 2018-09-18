@@ -75,7 +75,7 @@ func (e Error) IsCantAccessChat() bool {
 
 func (e Error) IsParseError() bool {
 	e.Description = strings.ToLower(e.Description)
-	return strings.Contains(e.Description, "parse message text") || strings.Contains(e.Description, "can't parse entities in message text")
+	return strings.Contains(e.Description, "parse message text") || strings.Contains(e.Description, "can't parse entities")
 }
 
 var REParseErrorOffset = regexp.MustCompile("starting at byte offset ([0-9]*)")
