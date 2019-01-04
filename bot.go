@@ -482,14 +482,17 @@ func (bot *BotAPI) GetUpdatesChan(config UpdateConfig) (UpdatesChannel, error) {
 			}
 
 			hasMessageUpdateFrom := map[int64]int{}
+			ignoreUpdates := map[int]struct{}{}
 
 			for i, update := range updates {
-				if update.Message != nil {
-					hasMessageUpdateFrom[update.Message.From.ID] = i
+				if update.UpdateID >= config.Offset {
+					if update.Message != nil {
+						hasMessageUpdateFrom[update.Message.From.ID] = i
+					}
 				}
 			}
 
-			for _, update := range updates {
+			for i, update := range updates {
 				if update.UpdateID >= config.Offset {
 					if update.ChosenInlineResult != nil {
 						if otherUpdate, exists := hasMessageUpdateFrom[update.ChosenInlineResult.From.ID]; exists {
@@ -497,17 +500,22 @@ func (bot *BotAPI) GetUpdatesChan(config UpdateConfig) (UpdatesChannel, error) {
 							// we can correlate choosen_result and message appeared in the chat
 							idDiff := updates[otherUpdate].UpdateID - update.UpdateID
 							if idDiff > -10 && idDiff < 10 {
-								// set the chat info for ChosenInlineResult as it only have user info
-								update.ChosenInlineResult.Chat = updates[otherUpdate].Message.Chat
-
-								// set the InlineMessageID for the m
-								updates[otherUpdate].Message.InlineMessageID = update.ChosenInlineResult.InlineMessageID
+								msg := *updates[otherUpdate].Message
+								updates[i].Message = &msg
+								ignoreUpdates[otherUpdate] = struct{}{}
 							}
 						}
 					}
-					config.Offset = update.UpdateID + 1
-					ch <- update
 				}
+			}
+
+			for i, update := range updates {
+				config.Offset = update.UpdateID + 1
+				if _, ignored := ignoreUpdates[i]; ignored {
+					continue
+				}
+
+				ch <- update
 			}
 		}
 	}()
