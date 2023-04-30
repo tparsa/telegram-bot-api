@@ -3,17 +3,25 @@ package tgbotapi
 import (
 	"encoding/json"
 	"io"
+	"os"
 	"net/url"
 	"strconv"
 )
+
+func getAPIBaseUrl() string {
+	if value, ok := os.LookupEnv("TELEGRAM_BASE_URL"); ok {
+        return value
+    }
+    return fallback
+}
 
 // Telegram constants
 const (
 	// APIEndpoint is the endpoint for all API methods,
 	// with formatting for Sprintf.
-	APIEndpoint = "https://api.telegram.org/bot%s/%s"
+	APIEndpoint = "https://"+ getAPIBaseUrl() + "/bot%s/%s"
 	// FileEndpoint is the endpoint for downloading a file from Telegram.
-	FileEndpoint = "https://api.telegram.org/file/bot%s/%s"
+	FileEndpoint = "https://" + getAPIBaseUrl() + "/file/bot%s/%s"
 )
 
 // Constant values for ChatActions
