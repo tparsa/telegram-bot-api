@@ -12,7 +12,7 @@ func getAPIBaseUrl() string {
 	if value, ok := os.LookupEnv("TELEGRAM_BASE_URL"); ok {
         return value
     }
-    return fallback
+    return "api.telegram.org"
 }
 
 // Telegram constants
